@@ -11,8 +11,6 @@
 #include "tar.h"
 
 // Crudely extracted piece of Git
-struct archiver_args;
-
 
 extern void write_or_die(int fd, const void *buf, size_t count);
 
@@ -130,8 +128,8 @@ static size_t get_path_prefix(const char *path, size_t pathlen, size_t maxlen)
 	return i;
 }
 
-int write_tar_entry(struct archiver_args *args,
-		const unsigned char *sha1, const char *path, size_t pathlen,
+int write_tar_entry(
+		const char *path, size_t pathlen,
 		unsigned int mode, void *buffer, unsigned long size)
 {
 	struct ustar_header header;
@@ -140,11 +138,7 @@ int write_tar_entry(struct archiver_args *args,
 
 	memset(&header, 0, sizeof(header));
 
-	if (!sha1) {
-		*header.typeflag = TYPEFLAG_GLOBAL_HEADER;
-		mode = 0100666;
-		strcpy(header.name, "pax_global_header");
-	} else if (!path) {
+	if (!path) {
 		*header.typeflag = TYPEFLAG_EXT_HEADER;
 		mode = 0100666;
 		sprintf(header.name, "%s.paxheader", "here_was_sha1_to_hex");
@@ -206,7 +200,7 @@ int write_tar_entry(struct archiver_args *args,
 	sprintf(header.chksum, "%07o", ustar_header_chksum(&header));
 
 	if (ext_header.len > 0) {
-		err = write_tar_entry(args, sha1, NULL, 0, 0, ext_header.buf,
+		err = write_tar_entry(NULL, 0, 0, ext_header.buf,
 				ext_header.len);
 		if (err)
 			return err;
@@ -218,27 +212,3 @@ int write_tar_entry(struct archiver_args *args,
 	return err;
 }
 
-int write_global_extended_header(struct archiver_args *args)
-{
-	struct strbuf ext_header = STRBUF_INIT;
-	int err;
-
-	strbuf_append_ext_header(&ext_header, "comment", "here_was_sha1_to_hex", 40);
-	err = write_tar_entry(args, NULL, NULL, 0, 0, ext_header.buf,
-			ext_header.len);
-	strbuf_release(&ext_header);
-	return err;
-}
-
-int write_tar_archive(struct archiver_args *args)
-{
-	int err = 0;
-
-	//if (args->commit_sha1)
-	//	err = write_global_extended_header(args);
-	//if (!err)
-	//	err = write_archive_entries(args, write_tar_entry);
-	if (!err)
-		write_trailer();
-	return err;
-}
