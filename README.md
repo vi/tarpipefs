@@ -19,4 +19,6 @@ This version is early and hacky:
 
 1. Using tar implementation extracted from Git;
 2. No chmod, no dates, no device nodes;
-3. Can't do "mkdir -p"
+3. Can't do "mkdir -p";
+4. Each single file is kept in memory;
+5. Not tested much;
