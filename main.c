@@ -7,7 +7,7 @@ int write_tar_entry(
 void write_trailer();
 
 
-int main() {
+/*int main() {
 
     char* str = "Hello, world\n";
     char* path = "hello.txt";
@@ -17,4 +17,4 @@ int main() {
 
     write_trailer();
     return 0;
-}
+} */

@@ -130,7 +130,7 @@ static size_t get_path_prefix(const char *path, size_t pathlen, size_t maxlen)
 
 int write_tar_entry(
 		const char *path, size_t pathlen,
-		unsigned int mode, void *buffer, unsigned long size)
+		unsigned int mode, const void *buffer, unsigned long size)
 {
 	struct ustar_header header;
 	struct strbuf ext_header = STRBUF_INIT;
