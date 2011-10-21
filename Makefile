@@ -6,7 +6,7 @@ test: tarpipefs
 		./tarpipefs m > q.tar&
 		sleep 1
 		mkdir m/q
-		echo goodbue, world > m/q/rip.txt
+		echo Goodbye, world... > m/q/rip.txt
 		fusermount -u m
 		sleep 1
 		tar -tf q.tar > q.ls
