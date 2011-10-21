@@ -130,7 +130,7 @@ static size_t get_path_prefix(const char *path, size_t pathlen, size_t maxlen)
 
 int write_tar_entry(
 		const char *path, size_t pathlen,
-		unsigned int mode, const void *buffer, unsigned long size)
+		unsigned int mode, const void *buffer, unsigned long size, unsigned long mtime)
 {
 	struct ustar_header header;
 	struct strbuf ext_header = STRBUF_INIT;
@@ -185,7 +185,7 @@ int write_tar_entry(
 
 	sprintf(header.mode, "%07o", mode & 07777);
 	sprintf(header.size, "%011lo", S_ISREG(mode) ? size : 0);
-	sprintf(header.mtime, "%011lo", (unsigned long) 0 /* XXX */);
+	sprintf(header.mtime, "%011lo", mtime);
 
 	sprintf(header.uid, "%07o", 0);
 	sprintf(header.gid, "%07o", 0);
@@ -201,7 +201,7 @@ int write_tar_entry(
 
 	if (ext_header.len > 0) {
 		err = write_tar_entry(NULL, 0, 0, ext_header.buf,
-				ext_header.len);
+				ext_header.len, mtime);
 		if (err)
 			return err;
 	}

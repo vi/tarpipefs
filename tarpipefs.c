@@ -30,6 +30,9 @@
 #include <sys/xattr.h>
 #endif
 #include <bsd/string.h>
+#include <time.h>
+
+#include "tar.h"
 
 char current_directory[PATH_MAX];
 char current_file[PATH_MAX];
@@ -37,12 +40,8 @@ char current_file[PATH_MAX];
 char* buffer;
 size_t buffer_size;
 off_t file_length;
+unsigned long mtime;
 
-
-int write_tar_entry(
-		const char *path, size_t pathlen,
-		unsigned int mode, const void *buffer, unsigned long size);
-void write_trailer();
 
 static int is_in_current_directory(const char* path) {
     int i;
@@ -60,7 +59,10 @@ static int is_in_current_directory(const char* path) {
 }
 
 static void write_to_tar_and_flush() {
-    write_tar_entry(current_file+1, strlen(current_file+1), 0100755, buffer, file_length);
+    if(!current_file[0]) {
+        return;
+    }
+    write_tar_entry(current_file+1, strlen(current_file+1), 0100755, buffer, file_length, mtime);
 
     if(buffer_size > 3*file_length) {
         free(buffer);
@@ -79,6 +81,7 @@ static void ensure_buffer_size(size_t size) {
 }
 
 static void check_file(const char* path) {
+    /* If we start dealing with some new file then write the old one first */
     if(strcmp(path, current_file)) {
         write_to_tar_and_flush();
         strlcpy(current_file, path, PATH_MAX);
@@ -132,7 +135,7 @@ static int xmp_mkdir(const char *path, mode_t mode)
 {
     strlcpy(current_directory, path, PATH_MAX);
 
-    write_tar_entry(path+1, strlen(path+1), 0040644, NULL, 0);
+    write_tar_entry(path+1, strlen(path+1), 0040644, NULL, 0, mtime);
 
 	return 0;
 }
@@ -149,7 +152,7 @@ static int xmp_rmdir(const char *path)
 
 static int xmp_symlink(const char *from, const char *to)
 {
-    write_tar_entry(to+1, strlen(to+1), 0120755, from, strlen(from));
+    write_tar_entry(to+1, strlen(to+1), 0120755, from, strlen(from), (unsigned long)time(NULL));
     return 0;
 }
 
@@ -194,20 +197,31 @@ static int xmp_ftruncate(const char *path, off_t size,
 
 static int xmp_utimens(const char *path, const struct timespec ts[2])
 {
-    return -ENOTSUP;
-    // XXX
+    if(strcmp(path, current_file)) {
+        return -ENOTSUP;
+    }       
+    
+    struct timeval tv[2];
+
+    tv[0].tv_sec = ts[0].tv_sec;
+    tv[0].tv_usec = ts[0].tv_nsec / 1000;
+    tv[1].tv_sec = ts[1].tv_sec;
+    tv[1].tv_usec = ts[1].tv_nsec / 1000;
+
+    mtime = tv[1].tv_sec;
+    return 0;
 }
 
 static int xmp_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 {
-    strlcpy(current_file, path, PATH_MAX);
+    check_file(path);
 
 	return 0;
 }
 
 static int xmp_open(const char *path, struct fuse_file_info *fi)
 {
-    strlcpy(current_file, path, PATH_MAX);
+    check_file(path);
 
 	return 0;
 }
@@ -246,8 +260,7 @@ static int xmp_flush(const char *path, struct fuse_file_info *fi)
 
 static int xmp_release(const char *path, struct fuse_file_info *fi)
 {
-    write_to_tar_and_flush();
-
+    /* Do not write yet because of we don't know all attributes */
 	return 0;
 }
 
@@ -345,8 +358,11 @@ int main(int argc, char *argv[])
     buffer=(char*)malloc(1024);
     buffer_size=1024;
     file_length=0;
+    
+    mtime=(unsigned long)time(NULL);
 
 	int ret = fuse_main(argc2, argv2, &xmp_oper, NULL);
+    write_to_tar_and_flush();
     write_trailer();
     return ret;
 }

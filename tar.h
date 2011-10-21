@@ -5,6 +5,12 @@
 #define TYPEFLAG_GLOBAL_HEADER	'g'
 #define TYPEFLAG_EXT_HEADER	'x'
 
+int write_tar_entry(
+		const char *path, size_t pathlen,
+		unsigned int mode, const void *buffer, unsigned long size, unsigned long mtime);
+
+void write_trailer();
+
 struct ustar_header {
 	char name[100];		/*   0 */
 	char mode[8];		/* 100 */

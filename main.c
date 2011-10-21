@@ -1,11 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 
-int write_tar_entry(
-		const char *path, size_t pathlen,
-		unsigned int mode, void *buffer, unsigned long size);
-void write_trailer();
-
+#include "tar.h"
 
 /*int main() {
 
