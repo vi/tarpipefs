@@ -3,7 +3,7 @@ You write to special write-only FS - it produces tar archive. Can be used for co
     /tmp$ mkdir m
     /tmp$ tarpipefs m | gzip > ololo.tar.gz&
     [1] 1337
-    /tmp/m$ cd m
+    /tmp$ cd m
     /tmp/m$ mkdir qqq
     /tmp/m$ mkdir qqq/lol # no mkdir -p yet
     /tmp/m$ echo Hello, world > qqq/lol/hello.txt
@@ -11,9 +11,10 @@ You write to special write-only FS - it produces tar archive. Can be used for co
     /tmp$ fusermount -u m
     [1]+  Done      tarpipefs m | gzip > ololo.tar.gz
     /tmp$ tar -tvf ololo.tar.gz
-    drwxrwxr-x root/root         0 1970-01-01 03:00 qqq
-    drwxrwxr-x root/root         0 1970-01-01 03:00 qqq/lol
-    -rwxrwxr-x root/root        13 1970-01-01 03:00 qqq/lol/hello.txt
+    drwxrwxr-x root/root         0 2011-10-21 16:11 qqq
+    drwxrwxr-x root/root         0 2011-10-21 16:11 qqq/lol
+    -rwxrwxr-x root/root        13 2011-10-21 16:11 qqq/lol/hello.txt
+
 
 This version is early and hacky:
 
